@@ -108,12 +108,12 @@
 
 .sidebar-item:hover, .sidebar-item:focus {
   background-color: #e9ecef;
-  color: #0d6efd;
+  color: rgb(45, 234, 234);
 }
 
 .sidebar-item.active {
   background-color: #e7f1ff;
-  color: #0d6efd;
+  color: darkslategray;
   font-weight: 500;
 }
 

@@ -5,9 +5,8 @@ const useAxios = () => {
   const { token, logout } = useAuth();
 
   const instance = axios.create({
-    baseURL: "http://localhost:8080", // change to your Spring Boot backend URL
+    baseURL: "http://ec2-43-205-233-195.ap-south-1.compute.amazonaws.com:8080", // change to your Spring Boot backend URL
   });
-  console.log(token);
 
   // Attach JWT in headers
   instance.interceptors.request.use((config) => {

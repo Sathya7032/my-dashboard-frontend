@@ -11,6 +11,9 @@ import IncomeManager from "./pages/IncomeManager";
 import TransactionManager from "./pages/TransactionManager";
 import DebtManager from "./pages/DebtManager";
 import EmailManager from "./pages/EmailManager";
+import NoteManager from "./pages/NoteManager";
+import CategoryManager from "./pages/CategoryManager";
+import DiaryManager from "./pages/DiaryManager";
 
 const App = () => {
   return (
@@ -71,6 +74,30 @@ const App = () => {
             element={
               <PrivateRoute>
                 <EmailManager/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/notes-manager"
+            element={
+              <PrivateRoute>
+                <NoteManager/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/category-manager"
+            element={
+              <PrivateRoute>
+                <CategoryManager/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/dairy-manager"
+            element={
+              <PrivateRoute>
+                <DiaryManager/>
               </PrivateRoute>
             }
           />

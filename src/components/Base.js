@@ -18,7 +18,9 @@ import {
   ChevronRight,
   ListCheck,
   CurrencyDollar,
-  Envelope
+  Envelope,
+  Book,
+  Bookmark
 } from 'react-bootstrap-icons';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -80,6 +82,17 @@ export const Base = ({ children }) => {
       label: 'Email Manager'
       
     },
+    { path: '/notes-manager', icon: <Book />, label: 'Add Notes' ,
+      subItems: [
+       { path: '/category-manager', label: 'Add Category' },
+     ]
+    },
+    { 
+      path: '/dairy-manager', 
+      icon: <Bookmark />, 
+      label: 'Dairy Manager'
+      
+    },
   ];
 
   const isActive = (path) => {
@@ -90,29 +103,29 @@ export const Base = ({ children }) => {
   return (
     <div className={`base-container ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       {/* Top Navbar */}
-      <Navbar bg="light" variant="dark" expand="lg" fixed="top" className="main-navbar">
+      <Navbar  variant="dark" expand="lg" fixed="top" className="main-navbar" style={{backgroundColor:'darkslategray'}}>
         <Container fluid>
           <Button 
             variant="outline-light" 
             onClick={toggleSidebar}
             className="sidebar-toggle me-2"
           >
-            {sidebarOpen ? <ChevronLeft color='dark'/> : <ChevronRight color='dark' />}
+            {sidebarOpen ? <ChevronLeft color='white'/> : <ChevronRight color='white' />}
           </Button>
           
           <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
-            <span className="brand-text text-dark">Admin Dashboard</span>
+            <span className="brand-text text-white">Admin Dashboard</span>
           </Navbar.Brand>
           
           <Dropdown align="end" className="ms-auto">
             <Dropdown.Toggle as={Button} variant="outline-light" className="user-dropdown">
-              <PersonCircle className="user-avatar me-2" color='dark' />
-              <span className="user-name text-dark d-none d-md-inline">Admin</span>
+              <PersonCircle className="user-avatar me-2" color='white' />
+              <span className="user-name text-white d-none d-md-inline">Admin</span>
             </Dropdown.Toggle>
 
             <Dropdown.Menu className="dropdown-menu-custom">
               <Dropdown.Item as={Link} to="/change-password">
-                <Lock className="me-2" color='dark' /> Change Password
+                <Lock className="me-2" color='white' /> Change Password
               </Dropdown.Item>
               <Dropdown.Divider />
               <Dropdown.Item onClick={logout}>

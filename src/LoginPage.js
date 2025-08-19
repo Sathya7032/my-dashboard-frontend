@@ -51,7 +51,7 @@ const LoginPage = () => {
     
     setIsLoading(true);
     try {
-      await axios.post("http://localhost:8080/auth/login", {
+      await axios.post("http://ec2-43-205-233-195.ap-south-1.compute.amazonaws.com:8080/auth/login", {
         username: form.username,
         password: form.password,
       });
@@ -87,7 +87,7 @@ const LoginPage = () => {
     
     setIsLoading(true);
     try {
-      const res = await axios.post("http://localhost:8080/auth/verify-otp", {
+      const res = await axios.post("http://ec2-43-205-233-195.ap-south-1.compute.amazonaws.com:8080/auth/verify-otp", {
         username: form.username,
         otp: form.otp,
       });
