@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { Base } from '../components/Base'
-import axios from 'axios'
 import {
   Table,
   Button,
@@ -11,8 +10,10 @@ import {
   Row,
   Col,
   Badge,
+  Card,
 } from 'react-bootstrap'
 import useAxios from '../auth/useAxios'
+import { FaMoneyBillWave, FaPlus, FaEdit, FaTrash, FaEye, FaExchangeAlt, FaChartLine } from 'react-icons/fa'
 
 const DebtManager = () => {
   const [debts, setDebts] = useState([])
@@ -225,150 +226,209 @@ const DebtManager = () => {
     }
   }
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount)
+  }
+
   return (
     <Base>
       <div className="container py-4">
-        <Row className="mb-3 align-items-center">
-          <Col>
-            <h2>Debt Management</h2>
-          </Col>
-          <Col className="text-end">
-            <Button variant="success" className="me-2" onClick={openAddModal}>
-              Add Debt
-            </Button>
-            <Button
-              variant="info"
-              onClick={async () => {
-                try {
-                  await api.post(`${baseURL}/generate-interest`)
-                  alert('Monthly interest generated for all debts.')
-                  fetchDebts()
-                  fetchTotalOutstanding()
-                } catch {
-                  alert('Failed to generate interest.')
-                }
-              }}
-            >
-              Generate Monthly Interest
-            </Button>
-          </Col>
-        </Row>
+        <Card className="shadow-sm border-0 mb-4">
+          <Card.Body className="p-4">
+            <Row className="align-items-center">
+              <Col>
+                <div className="d-flex align-items-center">
+                  <div className="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                    <FaMoneyBillWave size={28} className="text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="mb-0 fw-bold">Debt Management</h2>
+                    <p className="text-muted mb-0">Track and manage all your debts</p>
+                  </div>
+                </div>
+              </Col>
+              <Col className="text-end">
+                <Button 
+                  variant="primary" 
+                  className="me-2 rounded-pill px-4 py-2 d-inline-flex align-items-center"
+                  onClick={openAddModal}
+                >
+                  <FaPlus className="me-2" />
+                  Add Debt
+                </Button>
+                <Button
+                  variant="outline-info"
+                  className="rounded-pill px-4 py-2 d-inline-flex align-items-center"
+                  onClick={async () => {
+                    try {
+                      await api.post(`${baseURL}/generate-interest`)
+                      alert('Monthly interest generated for all debts.')
+                      fetchDebts()
+                      fetchTotalOutstanding()
+                    } catch {
+                      alert('Failed to generate interest.')
+                    }
+                  }}
+                >
+                  <FaChartLine className="me-2" />
+                  Generate Interest
+                </Button>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
 
         {totalOutstanding !== null && (
-          <Alert variant="warning" className="text-center fw-semibold">
-            Total Outstanding Debt: ₹{' '}
-            {parseFloat(totalOutstanding).toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+          <Alert variant="warning" className="text-center fw-semibold border-0 rounded-lg shadow-sm">
+            <div className="d-flex align-items-center justify-content-center">
+              <FaMoneyBillWave className="me-2" />
+              Total Outstanding Debt: {formatCurrency(totalOutstanding)}
+            </div>
           </Alert>
         )}
 
-        {error && <Alert variant="danger">{error}</Alert>}
-
-        {loading && (
-          <div className="text-center my-4">
-            <Spinner animation="border" variant="primary" />
-          </div>
+        {error && (
+          <Alert variant="danger" className="rounded-lg border-0 shadow-sm">
+            <div className="d-flex align-items-center">
+              <div className="flex-grow-1">
+                <h5 className="alert-heading">Error</h5>
+                {error}
+              </div>
+              <Button variant="outline-danger" size="sm" onClick={fetchDebts}>
+                Retry
+              </Button>
+            </div>
+          </Alert>
         )}
 
-        {!loading && debts.length === 0 && (
-          <p className="text-center text-muted">No debts recorded.</p>
+        {loading && (
+          <Card className="shadow-sm border-0 mb-4">
+            <Card.Body className="text-center p-5">
+              <Spinner animation="border" variant="primary" className="mb-3" />
+              <p className="text-muted">Loading debts...</p>
+            </Card.Body>
+          </Card>
+        )}
+
+        {!loading && debts.length === 0 && !error && (
+          <Card className="shadow-sm border-0 text-center py-5">
+            <Card.Body>
+              <div className="py-4">
+                <FaMoneyBillWave size={48} className="text-muted mb-3" />
+                <h4 className="text-muted">No debts recorded</h4>
+                <p className="text-muted mb-4">Get started by adding your first debt</p>
+                <Button variant="primary" onClick={openAddModal}>
+                  Add Debt
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
         )}
 
         {!loading && debts.length > 0 && (
-          <Table
-            striped
-            bordered
-            hover
-            responsive
-            className="table-professional"
-            style={{ minWidth: '900px' }}
-          >
-            <thead>
-              <tr>
-                <th>Lender</th>
-                <th>Principal Amount (₹)</th>
-                <th>Interest Rate (%)</th>
-                <th>Paid</th>
-                <th>Debt Taken At</th>
-                <th>Paid Amount (₹)</th>
-                <th>Interests</th>
-                <th style={{ minWidth: '220px' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {debts.map((debt) => (
-                <tr key={debt.id}>
-                  <td>{debt.lenderName}</td>
-                  <td>
-                    {debt.principalAmount?.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>{debt.interestRate.toFixed(2)}</td>
-                  <td>
-                    <Badge
-                      bg={debt.paid ? 'success' : 'warning'}
-                      text={debt.paid ? undefined : 'dark'}
-                    >
-                      {debt.paid ? 'Paid' : 'Pending'}
-                    </Badge>
-                  </td>
-                  <td>
-                    {debt.debtTakenAt
-                      ? new Date(debt.debtTakenAt).toLocaleDateString()
-                      : '-'}
-                  </td>
-                  <td>
-                    {debt.paidAmount?.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }) || '0.00'}
-                  </td>
-                  <td>
-                    <Button
-                      size="sm"
-                      variant="info"
-                      onClick={() => openInterestModal(debt)}
-                    >
-                      View Interests{' '}
-                      <Badge bg="light" text="dark">
-                        {debt.interests ? debt.interests.length : 0}
-                      </Badge>
-                    </Button>
-                  </td>
-                  <td>
-                    <Button
-                      size="sm"
-                      variant="warning"
-                      className="me-2"
-                      onClick={() => openEditModal(debt)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="me-2"
-                      onClick={() => openPaidToggleModal(debt)}
-                      title="Toggle Paid Status"
-                    >
-                      {debt.paid ? 'Mark Pending' : 'Mark Paid'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => openDeleteModal(debt)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+          <Card className="shadow-sm border-0">
+            <Card.Header className="bg-white py-3 border-0">
+              <h5 className="mb-0 fw-semibold">Debt Records</h5>
+            </Card.Header>
+            <Card.Body className="p-0">
+              <div className="table-responsive">
+                <Table hover className="mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="ps-4">Lender</th>
+                      <th>Principal Amount</th>
+                      <th>Interest Rate</th>
+                      <th>Status</th>
+                      <th>Debt Taken At</th>
+                      <th>Paid Amount</th>
+                      <th>Interests</th>
+                      <th className="text-end pe-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {debts.map((debt) => (
+                      <tr key={debt.id} className="align-middle">
+                        <td className="ps-4 fw-semibold">{debt.lenderName}</td>
+                        <td className="fw-bold text-primary">
+                          {formatCurrency(debt.principalAmount)}
+                        </td>
+                        <td>
+                          <Badge bg="light" text="dark" className="px-2 py-1">
+                            {debt.interestRate.toFixed(2)}%
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge
+                            bg={debt.paid ? 'success' : 'warning'}
+                            className="px-2 py-1"
+                          >
+                            {debt.paid ? 'Paid' : 'Pending'}
+                          </Badge>
+                        </td>
+                        <td>
+                          {debt.debtTakenAt
+                            ? new Date(debt.debtTakenAt).toLocaleDateString()
+                            : '-'}
+                        </td>
+                        <td className={debt.paidAmount > 0 ? 'text-success fw-semibold' : ''}>
+                          {formatCurrency(debt.paidAmount || 0)}
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant="outline-info"
+                            className="rounded-pill d-inline-flex align-items-center"
+                            onClick={() => openInterestModal(debt)}
+                          >
+                            <FaEye className="me-1" />
+                            View{' '}
+                            <Badge bg="light" text="dark" className="ms-1">
+                              {debt.interests ? debt.interests.length : 0}
+                            </Badge>
+                          </Button>
+                        </td>
+                        <td className="text-end pe-4">
+                          <Button
+                            size="sm"
+                            variant="outline-primary"
+                            className="me-2 rounded-pill px-3"
+                            onClick={() => openEditModal(debt)}
+                          >
+                            <FaEdit className="me-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline-secondary"
+                            className="me-2 rounded-pill px-3"
+                            onClick={() => openPaidToggleModal(debt)}
+                            title="Toggle Paid Status"
+                          >
+                            <FaExchangeAlt className="me-1" />
+                            {debt.paid ? 'Pending' : 'Paid'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            className="rounded-pill px-3"
+                            onClick={() => openDeleteModal(debt)}
+                          >
+                            <FaTrash className="me-1" />
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </Card.Body>
+          </Card>
         )}
 
         {/* Debt Add/Edit Modal */}
@@ -377,16 +437,19 @@ const DebtManager = () => {
           onHide={() => setShowDebtModal(false)}
           centered
           size="lg"
+          className="modal-professional"
         >
+          <Modal.Header closeButton className="bg-light">
+            <Modal.Title className="fw-bold">
+              {editingDebt ? 'Edit Debt' : 'Add New Debt'}
+            </Modal.Title>
+          </Modal.Header>
           <Form onSubmit={handleDebtSubmit}>
-            <Modal.Header closeButton>
-              <Modal.Title>{editingDebt ? 'Edit Debt' : 'Add Debt'}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
+            <Modal.Body className="p-4">
               <Row>
-                <Col md={6} className="mb-3">
+                <Col md={6} className="mb-4">
                   <Form.Group controlId="formLenderName">
-                    <Form.Label>
+                    <Form.Label className="fw-semibold mb-2">
                       Lender Name <span className="text-danger">*</span>
                     </Form.Label>
                     <Form.Control
@@ -396,12 +459,13 @@ const DebtManager = () => {
                       onChange={handleChange}
                       placeholder="Enter lender's name"
                       required
+                      className="py-2"
                     />
                   </Form.Group>
                 </Col>
-                <Col md={6} className="mb-3">
+                <Col md={6} className="mb-4">
                   <Form.Group controlId="formPrincipalAmount">
-                    <Form.Label>
+                    <Form.Label className="fw-semibold mb-2">
                       Principal Amount (₹) <span className="text-danger">*</span>
                     </Form.Label>
                     <Form.Control
@@ -413,15 +477,16 @@ const DebtManager = () => {
                       onChange={handleChange}
                       placeholder="Enter principal amount"
                       required
+                      className="py-2"
                     />
                   </Form.Group>
                 </Col>
               </Row>
 
               <Row>
-                <Col md={6} className="mb-3">
+                <Col md={6} className="mb-4">
                   <Form.Group controlId="formInterestRate">
-                    <Form.Label>
+                    <Form.Label className="fw-semibold mb-2">
                       Interest Rate (%) <span className="text-danger">*</span>
                     </Form.Label>
                     <Form.Control
@@ -434,12 +499,13 @@ const DebtManager = () => {
                       onChange={handleChange}
                       placeholder="Monthly interest rate in %"
                       required
+                      className="py-2"
                     />
                   </Form.Group>
                 </Col>
-                <Col md={6} className="mb-3">
+                <Col md={6} className="mb-4">
                   <Form.Group controlId="formDebtTakenAt">
-                    <Form.Label>
+                    <Form.Label className="fw-semibold mb-2">
                       Debt Taken At <span className="text-danger">*</span>
                     </Form.Label>
                     <Form.Control
@@ -448,15 +514,16 @@ const DebtManager = () => {
                       value={form.debtTakenAt}
                       onChange={handleChange}
                       required
+                      className="py-2"
                     />
                   </Form.Group>
                 </Col>
               </Row>
 
               <Row>
-                <Col md={6} className="mb-3">
+                <Col md={6} className="mb-4">
                   <Form.Group controlId="formPaidAmount">
-                    <Form.Label>Paid Amount (₹)</Form.Label>
+                    <Form.Label className="fw-semibold mb-2">Paid Amount (₹)</Form.Label>
                     <Form.Control
                       type="number"
                       step="0.01"
@@ -465,26 +532,36 @@ const DebtManager = () => {
                       value={form.paidAmount}
                       onChange={handleChange}
                       placeholder="Amount paid so far"
+                      className="py-2"
                     />
                   </Form.Group>
                 </Col>
-                <Col md={6} className="mb-3 d-flex align-items-center">
+                <Col md={6} className="mb-4 d-flex align-items-center">
                   <Form.Check
                     type="checkbox"
                     label="Debt Paid"
                     name="paid"
                     checked={form.paid}
                     onChange={handleChange}
+                    className="fw-semibold pt-4"
                   />
                 </Col>
               </Row>
             </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowDebtModal(false)}>
+            <Modal.Footer className="bg-light px-4 py-3">
+              <Button 
+                variant="outline-secondary" 
+                onClick={() => setShowDebtModal(false)}
+                className="rounded-pill px-4"
+              >
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
-                {editingDebt ? 'Update' : 'Add'}
+              <Button 
+                variant="primary" 
+                type="submit"
+                className="rounded-pill px-4"
+              >
+                {editingDebt ? 'Update Debt' : 'Add Debt'}
               </Button>
             </Modal.Footer>
           </Form>
@@ -495,26 +572,33 @@ const DebtManager = () => {
           show={showPaidToggleModal}
           onHide={() => setShowPaidToggleModal(false)}
           centered
+          className="modal-professional"
         >
-          <Modal.Header closeButton>
-            <Modal.Title>Toggle Debt Paid Status</Modal.Title>
+          <Modal.Header closeButton className="bg-light">
+            <Modal.Title className="fw-bold">Update Debt Status</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="p-4 text-center">
             {paidToggleError && (
-              <Alert variant="danger" className="mb-3">
+              <Alert variant="danger" className="mb-3 rounded-lg">
                 {paidToggleError}
               </Alert>
             )}
-            <p>
-              Current status for debt from{' '}
-              <strong>{paidToggleDebt?.lenderName}</strong>:{' '}
+            <div className="bg-light rounded-circle d-inline-flex p-4 mb-3">
+              <FaExchangeAlt size={24} className="text-primary" />
+            </div>
+            <h5>Update Payment Status</h5>
+            <p className="text-muted">
+              Debt from <strong className="text-dark">{paidToggleDebt?.lenderName}</strong>
+            </p>
+            <div className="d-flex align-items-center justify-content-center mb-3">
+              <span className="me-3 fw-semibold">Status:</span>
               <Badge
                 bg={paidToggleValue ? 'success' : 'warning'}
-                text={paidToggleValue ? undefined : 'dark'}
+                className="px-3 py-2"
               >
                 {paidToggleValue ? 'Paid' : 'Pending'}
               </Badge>
-            </p>
+            </div>
             <Form.Check
               type="switch"
               id="paid-status-switch"
@@ -522,13 +606,15 @@ const DebtManager = () => {
               checked={paidToggleValue}
               disabled={paidToggleLoading}
               onChange={(e) => setPaidToggleValue(e.target.checked)}
+              className="d-inline-flex justify-content-center fw-semibold"
             />
           </Modal.Body>
-          <Modal.Footer>
+          <Modal.Footer className="bg-light justify-content-center">
             <Button
-              variant="secondary"
+              variant="outline-secondary"
               onClick={() => setShowPaidToggleModal(false)}
               disabled={paidToggleLoading}
+              className="rounded-pill px-4"
             >
               Cancel
             </Button>
@@ -536,11 +622,15 @@ const DebtManager = () => {
               variant="primary"
               onClick={savePaidToggleChange}
               disabled={paidToggleLoading}
+              className="rounded-pill px-4"
             >
               {paidToggleLoading ? (
-                <Spinner animation="border" size="sm" />
+                <>
+                  <Spinner animation="border" size="sm" className="me-2" />
+                  Updating...
+                </>
               ) : (
-                'Save'
+                'Save Changes'
               )}
             </Button>
           </Modal.Footer>
@@ -552,61 +642,69 @@ const DebtManager = () => {
           onHide={() => setShowInterestModal(false)}
           centered
           size="lg"
+          className="modal-professional"
         >
-          <Modal.Header closeButton>
-            <Modal.Title>
+          <Modal.Header closeButton className="bg-light">
+            <Modal.Title className="fw-bold">
               Interests for Debt: {selectedDebtForInterest?.lenderName}
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="p-4">
             {currentInterests.length === 0 ? (
-              <p>No interest entries found.</p>
+              <div className="text-center py-4">
+                <FaChartLine size={36} className="text-muted mb-3" />
+                <p className="text-muted">No interest entries found.</p>
+              </div>
             ) : (
-              <Table striped bordered hover responsive>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Interest Amount (₹)</th>
-                    <th>Paid</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentInterests.map((interest) => (
-                    <tr key={interest.id}>
-                      <td>{new Date(interest.interestDate).toLocaleDateString()}</td>
-                      <td>
-                        {interest.interestAmount?.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td>
-                        {interest.paid ? (
-                          <Badge bg="success">Paid</Badge>
-                        ) : (
-                          <Badge bg="warning text-dark">Pending</Badge>
-                        )}
-                      </td>
-                      <td>
-                        {!interest.paid && (
-                          <Button
-                            size="sm"
-                            variant="success"
-                            onClick={() => payInterest(interest.id)}
-                          >
-                            Mark as Paid
-                          </Button>
-                        )}
-                      </td>
+              <div className="table-responsive">
+                <Table hover>
+                  <thead className="table-light">
+                    <tr>
+                      <th>Date</th>
+                      <th>Interest Amount</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
+                  </thead>
+                  <tbody>
+                    {currentInterests.map((interest) => (
+                      <tr key={interest.id}>
+                        <td>{new Date(interest.interestDate).toLocaleDateString()}</td>
+                        <td className="fw-semibold">
+                          {formatCurrency(interest.interestAmount)}
+                        </td>
+                        <td>
+                          {interest.paid ? (
+                            <Badge bg="success" className="px-2 py-1">Paid</Badge>
+                          ) : (
+                            <Badge bg="warning" text="dark" className="px-2 py-1">Pending</Badge>
+                          )}
+                        </td>
+                        <td>
+                          {!interest.paid && (
+                            <Button
+                              size="sm"
+                              variant="success"
+                              className="rounded-pill px-3"
+                              onClick={() => payInterest(interest.id)}
+                            >
+                              Mark as Paid
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
             )}
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowInterestModal(false)}>
+          <Modal.Footer className="bg-light">
+            <Button 
+              variant="secondary" 
+              onClick={() => setShowInterestModal(false)}
+              className="rounded-pill px-4"
+            >
               Close
             </Button>
           </Modal.Footer>
@@ -617,24 +715,69 @@ const DebtManager = () => {
           show={showDeleteModal}
           onHide={() => setShowDeleteModal(false)}
           centered
+          className="modal-professional"
         >
-          <Modal.Header closeButton>
-            <Modal.Title>Confirm Delete</Modal.Title>
+          <Modal.Header closeButton className="bg-light">
+            <Modal.Title className="fw-bold">Confirm Delete</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
-            Are you sure you want to delete debt from{' '}
-            <strong>{deletingDebt?.lenderName}</strong>?
+          <Modal.Body className="p-4 text-center">
+            <div className="bg-danger bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+              <FaTrash size={24} className="text-danger" />
+            </div>
+            <h5>Are you sure?</h5>
+            <p className="text-muted">
+              You are about to delete debt from{' '}
+              <strong className="text-dark">{deletingDebt?.lenderName}</strong>. This action cannot be undone.
+            </p>
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+          <Modal.Footer className="bg-light justify-content-center">
+            <Button 
+              variant="outline-secondary" 
+              onClick={() => setShowDeleteModal(false)}
+              className="rounded-pill px-4"
+            >
               Cancel
             </Button>
-            <Button variant="danger" onClick={confirmDelete}>
-              Delete
+            <Button 
+              variant="danger" 
+              onClick={confirmDelete}
+              className="rounded-pill px-4"
+            >
+              Delete Debt
             </Button>
           </Modal.Footer>
         </Modal>
       </div>
+
+      <style jsx>{`
+        .table th {
+          border-top: none;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 0.8rem;
+          letter-spacing: 0.5px;
+          color: #6c757d;
+        }
+        
+        .table td {
+          border-top: 1px solid #f1f1f1;
+          vertical-align: middle;
+        }
+        
+        .table tbody tr:hover {
+          background-color: #f8f9fa !important;
+        }
+        
+        .modal-professional .modal-content {
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn {
+          font-weight: 500;
+        }
+      `}</style>
     </Base>
   )
 }

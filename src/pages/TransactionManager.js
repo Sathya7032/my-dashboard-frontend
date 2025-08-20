@@ -9,8 +9,11 @@ import {
   Alert,
   Row,
   Col,
+  Card,
+  Badge,
 } from 'react-bootstrap'
 import useAxios from '../auth/useAxios'
+import { FaEdit, FaTrash, FaPlus, FaMoneyBillWave, FaReceipt } from 'react-icons/fa'
 
 const TransactionManager = () => {
   const [transactions, setTransactions] = useState([])
@@ -29,7 +32,7 @@ const TransactionManager = () => {
     amount: '',
     paidTo: '',
     paymentType: 'CASH',
-    wallet: { id: 1 }, // Adjust wallet id as needed or make it selectable
+    wallet: { id: 1 },
     createdAt: '',
   }
 
@@ -130,91 +133,164 @@ const TransactionManager = () => {
     }
   }
 
+  const getPaymentTypeVariant = (type) => {
+    return type === 'CASH' ? 'success' : 'primary'
+  }
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount)
+  }
+
   return (
     <Base>
       <div className="container py-4">
-        <Row className="align-items-center mb-4">
-          <Col>
-            <h2>Transaction Management</h2>
-          </Col>
-          <Col className="text-end">
-            <Button variant="success" onClick={openAddModal}>
-              Add Transaction
-            </Button>
-          </Col>
-        </Row>
+        <Card className="shadow-sm border-0 mb-4">
+          <Card.Body className="p-4">
+            <Row className="align-items-center">
+              <Col>
+                <div className="d-flex align-items-center">
+                  <div className="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                    <FaMoneyBillWave size={28} className="text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="mb-0 fw-bold">Transaction Management</h2>
+                    <p className="text-muted mb-0">Manage all financial transactions</p>
+                  </div>
+                </div>
+              </Col>
+              <Col className="text-end">
+                <Button 
+                  variant="primary" 
+                  onClick={openAddModal}
+                  className="rounded-pill px-4 py-2 d-inline-flex align-items-center"
+                >
+                  <FaPlus className="me-2" />
+                  Add Transaction
+                </Button>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
 
         {loading && (
-          <div className="text-center my-4">
-            <Spinner animation="border" variant="primary" />
-          </div>
+          <Card className="shadow-sm border-0 mb-4">
+            <Card.Body className="text-center p-5">
+              <Spinner animation="border" variant="primary" className="mb-3" />
+              <p className="text-muted">Loading transactions...</p>
+            </Card.Body>
+          </Card>
         )}
 
-        {error && <Alert variant="danger">{error}</Alert>}
+        {error && (
+          <Alert variant="danger" className="rounded-lg">
+            <div className="d-flex align-items-center">
+              <div className="flex-grow-1">
+                <h5 className="alert-heading">Error</h5>
+                {error}
+              </div>
+              <Button variant="outline-danger" size="sm" onClick={fetchTransactions}>
+                Retry
+              </Button>
+            </div>
+          </Alert>
+        )}
 
-        {!loading && transactions.length === 0 && (
-          <p className="text-center text-muted">No transactions found.</p>
+        {!loading && transactions.length === 0 && !error && (
+          <Card className="shadow-sm border-0 text-center py-5">
+            <Card.Body>
+              <div className="py-4">
+                <FaReceipt size={48} className="text-muted mb-3" />
+                <h4 className="text-muted">No transactions found</h4>
+                <p className="text-muted mb-4">Get started by adding your first transaction</p>
+                <Button variant="primary" onClick={openAddModal}>
+                  Add Transaction
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
         )}
 
         {!loading && transactions.length > 0 && (
-          <Table
-            striped
-            bordered
-            hover
-            responsive
-            className="table-professional"
-            style={{ minWidth: '700px' }}
-          >
-            <thead>
-              <tr>
-                <th>Amount (₹)</th>
-                <th>Paid To</th>
-                <th>Payment Type</th>
-                <th>Created At</th>
-                <th>Wallet ID</th>
-                <th style={{ minWidth: '160px' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx) => (
-                <tr key={tx.id}>
-                  <td>
-                    {tx.amount?.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>{tx.paidTo}</td>
-                  <td>{tx.paymentType}</td>
-                  <td>
-                    {tx.createdAt
-                      ? new Date(tx.createdAt).toLocaleString()
-                      : '-'}
-                  </td>
-                  <td>{tx.wallet?.id || '-'}</td>
-                  <td>
-                    <Button
-                      size="sm"
-                      variant="warning"
-                      className="me-2"
-                      onClick={() => openEditModal(tx)}
-                      aria-label={`Edit transaction ${tx.paidTo}`}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => openDeleteModal(tx)}
-                      aria-label={`Delete transaction ${tx.paidTo}`}
-                    >
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+          <Card className="shadow-sm border-0">
+            <Card.Header className="bg-white py-3 border-0">
+              <h5 className="mb-0 fw-semibold">Transaction History</h5>
+            </Card.Header>
+            <Card.Body className="p-0">
+              <div className="table-responsive">
+                <Table hover className="mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="ps-4">Amount</th>
+                      <th>Paid To</th>
+                      <th>Payment Type</th>
+                      <th>Created At</th>
+                      <th>Wallet ID</th>
+                      <th className="text-end pe-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((tx) => (
+                      <tr key={tx.id} className="align-middle">
+                        <td className="ps-4 fw-bold text-primary">
+                          {formatCurrency(tx.amount)}
+                        </td>
+                        <td>
+                          <div className="d-flex align-items-center">
+                            <div className="bg-light rounded-circle p-2 me-2">
+                              <FaMoneyBillWave size={14} className="text-muted" />
+                            </div>
+                            {tx.paidTo}
+                          </div>
+                        </td>
+                        <td>
+                          <Badge bg={getPaymentTypeVariant(tx.paymentType)} className="px-2 py-1">
+                            {tx.paymentType}
+                          </Badge>
+                        </td>
+                        <td>
+                          {tx.createdAt
+                            ? new Date(tx.createdAt).toLocaleString()
+                            : '-'}
+                        </td>
+                        <td>
+                          <span className="badge bg-light text-dark border">
+                            {tx.wallet?.id || '-'}
+                          </span>
+                        </td>
+                        <td className="text-end pe-4">
+                          <Button
+                            size="sm"
+                            variant="outline-primary"
+                            className="me-2 rounded-pill px-3"
+                            onClick={() => openEditModal(tx)}
+                            aria-label={`Edit transaction ${tx.paidTo}`}
+                          >
+                            <FaEdit className="me-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            className="rounded-pill px-3"
+                            onClick={() => openDeleteModal(tx)}
+                            aria-label={`Delete transaction ${tx.paidTo}`}
+                          >
+                            <FaTrash className="me-1" />
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </Card.Body>
+          </Card>
         )}
 
         {/* Add/Edit Transaction Modal */}
@@ -223,18 +299,19 @@ const TransactionManager = () => {
           onHide={() => setShowFormModal(false)}
           centered
           size="lg"
+          className="modal-professional"
         >
+          <Modal.Header closeButton className="bg-light">
+            <Modal.Title className="fw-bold">
+              {editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}
+            </Modal.Title>
+          </Modal.Header>
           <Form onSubmit={handleSubmit}>
-            <Modal.Header closeButton>
-              <Modal.Title>
-                {editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}
-              </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
+            <Modal.Body className="p-4">
               <Row>
                 <Col md={6} className="mb-3">
-                  <Form.Group controlId="formAmount">
-                    <Form.Label>
+                  <Form.Group controlId="formAmount" className="mb-4">
+                    <Form.Label className="fw-semibold mb-2">
                       Amount (₹) <span className="text-danger">*</span>
                     </Form.Label>
                     <Form.Control
@@ -244,14 +321,15 @@ const TransactionManager = () => {
                       name="amount"
                       value={form.amount}
                       onChange={handleChange}
-                      placeholder="Enter amount"
+                      placeholder="0.00"
                       required
+                      className="py-2"
                     />
                   </Form.Group>
                 </Col>
                 <Col md={6} className="mb-3">
-                  <Form.Group controlId="formPaidTo">
-                    <Form.Label>
+                  <Form.Group controlId="formPaidTo" className="mb-4">
+                    <Form.Label className="fw-semibold mb-2">
                       Paid To <span className="text-danger">*</span>
                     </Form.Label>
                     <Form.Control
@@ -261,6 +339,7 @@ const TransactionManager = () => {
                       onChange={handleChange}
                       placeholder="Payee name"
                       required
+                      className="py-2"
                     />
                   </Form.Group>
                 </Col>
@@ -268,8 +347,8 @@ const TransactionManager = () => {
 
               <Row>
                 <Col md={6} className="mb-3">
-                  <Form.Group controlId="formPaymentType">
-                    <Form.Label>
+                  <Form.Group controlId="formPaymentType" className="mb-4">
+                    <Form.Label className="fw-semibold mb-2">
                       Payment Type <span className="text-danger">*</span>
                     </Form.Label>
                     <Form.Select
@@ -277,6 +356,7 @@ const TransactionManager = () => {
                       value={form.paymentType}
                       onChange={handleChange}
                       required
+                      className="py-2"
                     >
                       <option value="CASH">Cash</option>
                       <option value="ONLINE">Online</option>
@@ -284,40 +364,48 @@ const TransactionManager = () => {
                   </Form.Group>
                 </Col>
                 <Col md={6} className="mb-3">
-                  <Form.Group controlId="formCreatedAt">
-                    <Form.Label>Created At</Form.Label>
+                  <Form.Group controlId="formCreatedAt" className="mb-4">
+                    <Form.Label className="fw-semibold mb-2">Created At</Form.Label>
                     <Form.Control
                       type="datetime-local"
                       name="createdAt"
                       value={form.createdAt}
                       onChange={handleChange}
+                      className="py-2"
                     />
                   </Form.Group>
                 </Col>
               </Row>
 
-              {/* Wallet ID fixed or selectable */}
               <Row>
                 <Col md={6} className="mb-3">
                   <Form.Group controlId="formWalletId">
-                    <Form.Label>Wallet ID</Form.Label>
+                    <Form.Label className="fw-semibold mb-2">Wallet ID</Form.Label>
                     <Form.Control
                       type="number"
                       name="walletId"
                       value={form.wallet.id}
                       disabled
-                      plaintext
+                      className="py-2 bg-light"
                     />
                   </Form.Group>
                 </Col>
               </Row>
             </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowFormModal(false)}>
+            <Modal.Footer className="bg-light px-4 py-3">
+              <Button 
+                variant="outline-secondary" 
+                onClick={() => setShowFormModal(false)}
+                className="rounded-pill px-4"
+              >
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
-                {editingTransaction ? 'Update' : 'Add'}
+              <Button 
+                type="submit" 
+                variant="primary"
+                className="rounded-pill px-4"
+              >
+                {editingTransaction ? 'Update Transaction' : 'Add Transaction'}
               </Button>
             </Modal.Footer>
           </Form>
@@ -328,24 +416,69 @@ const TransactionManager = () => {
           show={showDeleteModal}
           onHide={() => setShowDeleteModal(false)}
           centered
+          className="modal-professional"
         >
-          <Modal.Header closeButton>
-            <Modal.Title>Confirm Delete</Modal.Title>
+          <Modal.Header closeButton className="bg-light">
+            <Modal.Title className="fw-bold">Confirm Delete</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
-            Are you sure you want to delete transaction paid to{' '}
-            <strong>{deletingTransaction?.paidTo}</strong>?
+          <Modal.Body className="p-4 text-center">
+            <div className="bg-danger bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+              <FaTrash size={24} className="text-danger" />
+            </div>
+            <h5>Are you sure?</h5>
+            <p className="text-muted">
+              You are about to delete transaction paid to{' '}
+              <strong className="text-dark">{deletingTransaction?.paidTo}</strong>. This action cannot be undone.
+            </p>
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+          <Modal.Footer className="bg-light justify-content-center">
+            <Button 
+              variant="outline-secondary" 
+              onClick={() => setShowDeleteModal(false)}
+              className="rounded-pill px-4"
+            >
               Cancel
             </Button>
-            <Button variant="danger" onClick={confirmDelete}>
-              Delete
+            <Button 
+              variant="danger" 
+              onClick={confirmDelete}
+              className="rounded-pill px-4"
+            >
+              Delete Transaction
             </Button>
           </Modal.Footer>
         </Modal>
       </div>
+
+      <style jsx>{`
+        .table th {
+          border-top: none;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 0.8rem;
+          letter-spacing: 0.5px;
+          color: #6c757d;
+        }
+        
+        .table td {
+          border-top: 1px solid #f1f1f1;
+          vertical-align: middle;
+        }
+        
+        .table tbody tr:hover {
+          background-color: #f8f9fa !important;
+        }
+        
+        .modal-professional .modal-content {
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn {
+          font-weight: 500;
+        }
+      `}</style>
     </Base>
   )
 }

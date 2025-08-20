@@ -14,6 +14,7 @@ import EmailManager from "./pages/EmailManager";
 import NoteManager from "./pages/NoteManager";
 import CategoryManager from "./pages/CategoryManager";
 import DiaryManager from "./pages/DiaryManager";
+import JobApplicationManager from "./pages/JobApplicationManager";
 
 const App = () => {
   return (
@@ -98,6 +99,14 @@ const App = () => {
             element={
               <PrivateRoute>
                 <DiaryManager/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/job-application-manager"
+            element={
+              <PrivateRoute>
+                <JobApplicationManager/>
               </PrivateRoute>
             }
           />
