@@ -5,7 +5,7 @@ const useAxios = () => {
   const { token, logout } = useAuth();
 
   const instance = axios.create({
-    baseURL: "http://localhost:8080", // change to your Spring Boot backend URL
+    baseURL: "https://backend.codewithsathya.info", // change to your Spring Boot backend URL
   });
   console.log(token)
 
