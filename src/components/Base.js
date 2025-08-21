@@ -20,7 +20,8 @@ import {
   CurrencyDollar,
   Envelope,
   Book,
-  Bookmark
+  Bookmark,
+  Briefcase
 } from 'react-bootstrap-icons';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -94,6 +95,11 @@ export const Base = ({ children }) => {
       path: '/dairy-manager', 
       icon: <Bookmark />, 
       label: 'Diary Manager'
+    },
+    { 
+      path: '/job-application-manager', 
+      icon: <Briefcase />, 
+      label: 'Job Applications'
     },
   ];
 
