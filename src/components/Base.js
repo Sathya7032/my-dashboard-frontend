@@ -5,7 +5,8 @@ import {
   Button, 
   ListGroup,
   Dropdown,
-  Offcanvas
+  Offcanvas,
+  Badge
 } from 'react-bootstrap';
 import { 
   HouseDoor,
@@ -21,7 +22,11 @@ import {
   Envelope,
   Book,
   Bookmark,
-  Briefcase
+  Briefcase,
+  Search,
+  Bell,
+  Moon,
+  Sun
 } from 'react-bootstrap-icons';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -30,6 +35,7 @@ import './Base.css';
 export const Base = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
   const { logout } = useAuth();
 
@@ -46,10 +52,24 @@ export const Base = ({ children }) => {
       }
     };
 
+    // Check for saved dark mode preference
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedDarkMode);
+    
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    // Apply dark mode class to body
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
 
   const toggleSidebar = () => {
     const newState = !sidebarOpen;
@@ -57,12 +77,17 @@ export const Base = ({ children }) => {
     localStorage.setItem('sidebarOpen', JSON.stringify(newState));
   };
 
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
   const navItems = [
-    { path: '/dashboard', icon: <HouseDoor />, label: 'Dashboard' },
+    { path: '/dashboard', icon: <HouseDoor />, label: 'Dashboard', badge: 3 },
     { 
       path: '/task-manager', 
       icon: <ListCheck />, 
-      label: 'Task Manager'
+      label: 'Task Manager',
+      badge: 12
     },
     { 
       path: '/expense-tracker', 
@@ -76,12 +101,14 @@ export const Base = ({ children }) => {
     { 
       path: '/debt-manager', 
       icon: <CurrencyDollar />, 
-      label: 'Debt Manager'
+      label: 'Debt Manager',
+      badge: 5
     },
     { 
       path: '/email-manager', 
       icon: <Envelope />, 
-      label: 'Email Manager'
+      label: 'Email Manager',
+      badge: 24
     },
     { 
       path: '/notes-manager', 
@@ -99,7 +126,8 @@ export const Base = ({ children }) => {
     { 
       path: '/job-application-manager', 
       icon: <Briefcase />, 
-      label: 'Job Applications'
+      label: 'Job Applications',
+      badge: 7
     },
   ];
 
@@ -109,9 +137,9 @@ export const Base = ({ children }) => {
   };
 
   return (
-    <div className={`base-container ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <div className={`base-container ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'} ${darkMode ? 'dark-mode' : ''}`}>
       {/* Top Navbar */}
-      <Navbar variant="dark" expand="lg" fixed="top" className="main-navbar">
+      <Navbar expand="lg" fixed="top" className="main-navbar">
         <Container fluid>
           <Button 
             variant="outline-light" 
@@ -123,28 +151,93 @@ export const Base = ({ children }) => {
           
           <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
             <div className="brand-logo me-2">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13 3H4C2.89543 3 2 3.89543 2 5V10C2 11.1046 2.89543 12 4 12H13C14.1046 12 15 11.1046 15 10V5C15 3.89543 14.1046 3 13 3Z" fill="white"/>
-                <path d="M20 3H17C15.8954 3 15 3.89543 15 5V10C15 11.1046 15.8954 12 17 12H20C21.1046 12 22 11.1046 22 10V5C22 3.89543 21.1046 3 20 3Z" fill="white"/>
-                <path d="M20 14H7C5.89543 14 5 14.8954 5 16V19C5 20.1046 5.89543 21 7 21H20C21.1046 21 22 20.1046 22 19V16C22 14.8954 21.1046 14 20 14Z" fill="white"/>
-                <path d="M9 14H4C2.89543 14 2 14.8954 2 16V19C2 20.1046 2.89543 21 4 21H9C10.1046 21 11 20.1046 11 19V16C11 14.8954 10.1046 14 9 14Z" fill="white"/>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 3H4C2.89543 3 2 3.89543 2 5V10C2 11.1046 2.89543 12 4 12H13C14.1046 12 15 11.1046 15 10V5C15 3.89543 14.1046 3 13 3Z" fill="currentColor"/>
+                <path d="M20 3H17C15.8954 3 15 3.89543 15 5V10C15 11.1046 15.8954 12 17 12H20C21.1046 12 22 11.1046 22 10V5C22 3.89543 21.1046 3 20 3Z" fill="currentColor"/>
+                <path d="M20 14H7C5.89543 14 5 14.8954 5 16V19C5 20.1046 5.89543 21 7 21H20C21.1046 21 22 20.1046 22 19V16C22 14.8954 21.1046 14 20 14Z" fill="currentColor"/>
+                <path d="M9 14H4C2.89543 14 2 14.8954 2 16V19C2 20.1046 2.89543 21 4 21H9C10.1046 21 11 20.1046 11 19V16C11 14.8954 10.1046 14 9 14Z" fill="currentColor"/>
               </svg>
             </div>
             <span className="brand-text">Admin Suite</span>
           </Navbar.Brand>
           
+          {/* Search Bar */}
+          <div className="search-container mx-4 d-none d-md-flex">
+            <div className="search-input-group">
+              <Search className="search-icon" />
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className="search-input"
+              />
+            </div>
+          </div>
+          
           <div className="ms-auto d-flex align-items-center">
+            {/* Dark Mode Toggle */}
+            <Button 
+              variant="outline-light" 
+              className="me-2 theme-toggle"
+              onClick={toggleDarkMode}
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </Button>
+            
+            {/* Notifications */}
+            <Dropdown align="end" className="me-2">
+              <Dropdown.Toggle as={Button} variant="outline-light" className="notification-btn">
+                <Bell />
+                <Badge bg="danger" className="notification-badge">5</Badge>
+              </Dropdown.Toggle>
+              <Dropdown.Menu className="dropdown-menu-custom notification-menu">
+                <Dropdown.Header>Notifications</Dropdown.Header>
+                <Dropdown.Item className="notification-item">
+                  <div className="d-flex">
+                    <div className="notification-icon bg-primary">
+                      <Bell size={14} />
+                    </div>
+                    <div className="ms-2">
+                      <div className="notification-title">New message received</div>
+                      <div className="notification-time">2 minutes ago</div>
+                    </div>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item className="notification-item">
+                  <div className="d-flex">
+                    <div className="notification-icon bg-success">
+                      <People size={14} />
+                    </div>
+                    <div className="ms-2">
+                      <div className="notification-title">New user registered</div>
+                      <div className="notification-time">5 minutes ago</div>
+                    </div>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Divider />
+                <Dropdown.Item className="text-center">View all notifications</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+            
             <div className="user-info me-3 d-none d-md-block">
               <div className="user-name">Administrator</div>
               <div className="user-role">Super Admin</div>
             </div>
+            
             <Dropdown align="end">
               <Dropdown.Toggle as={Button} variant="outline-light" className="user-dropdown">
                 <PersonCircle className="user-avatar me-2" />
               </Dropdown.Toggle>
 
               <Dropdown.Menu className="dropdown-menu-custom">
-                <Dropdown.Header>Admin Account</Dropdown.Header>
+                <Dropdown.Header>
+                  <div className="d-flex align-items-center">
+                    <PersonCircle className="user-avatar-lg me-2" />
+                    <div>
+                      <div className="user-name">Administrator</div>
+                      <div className="user-role">Super Admin</div>
+                    </div>
+                  </div>
+                </Dropdown.Header>
                 <Dropdown.Item as={Link} to="/profile">
                   <PersonCircle className="me-2" /> Profile
                 </Dropdown.Item>
@@ -191,6 +284,14 @@ export const Base = ({ children }) => {
             isActive={isActive} 
             isMobile={isMobile}
           />
+          {sidebarOpen && (
+            <div className="sidebar-footer">
+              <div className="system-status">
+                <div className="status-indicator online"></div>
+                <span>System Online</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -221,6 +322,11 @@ const SidebarContent = ({ navItems, isActive, isMobile, toggleSidebar }) => {
               <span className="sidebar-icon">{item.icon}</span>
               <span className="sidebar-text">{item.label}</span>
             </div>
+            {item.badge && (
+              <Badge bg="primary" className="sidebar-badge">
+                {item.badge}
+              </Badge>
+            )}
             {item.subItems && (
               <span className="submenu-indicator">
                 <ChevronRight />
