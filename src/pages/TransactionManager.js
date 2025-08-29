@@ -11,14 +11,16 @@ import {
   Col,
   Card,
   Badge,
+  Accordion,
 } from 'react-bootstrap'
 import useAxios from '../auth/useAxios'
-import { FaEdit, FaTrash, FaPlus, FaMoneyBillWave, FaReceipt } from 'react-icons/fa'
+import { FaEdit, FaTrash, FaPlus, FaMoneyBillWave, FaReceipt, FaChevronDown, FaChevronUp } from 'react-icons/fa'
 
 const TransactionManager = () => {
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [expandedMonths, setExpandedMonths] = useState(new Set())
 
   const [showFormModal, setShowFormModal] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
@@ -53,6 +55,48 @@ const TransactionManager = () => {
   useEffect(() => {
     fetchTransactions()
   }, [])
+
+  // Group transactions by month and calculate totals
+  const getTransactionsByMonth = () => {
+    const grouped = {};
+    
+    transactions.forEach(transaction => {
+      if (!transaction.createdAt) return;
+      
+      const date = new Date(transaction.createdAt);
+      const monthYear = `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!grouped[monthKey]) {
+        grouped[monthKey] = {
+          monthYear,
+          transactions: [],
+          total: 0
+        };
+      }
+      
+      grouped[monthKey].transactions.push(transaction);
+      grouped[monthKey].total += transaction.amount;
+    });
+    
+    // Sort months in descending order (newest first)
+    return Object.entries(grouped)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      }, {});
+  }
+
+  const toggleMonth = (monthKey) => {
+    const newExpanded = new Set(expandedMonths);
+    if (newExpanded.has(monthKey)) {
+      newExpanded.delete(monthKey);
+    } else {
+      newExpanded.add(monthKey);
+    }
+    setExpandedMonths(newExpanded);
+  }
 
   const openAddModal = () => {
     setEditingTransaction(null)
@@ -146,6 +190,8 @@ const TransactionManager = () => {
     }).format(amount)
   }
 
+  const transactionsByMonth = getTransactionsByMonth()
+
   return (
     <Base>
       <div className="container py-4">
@@ -218,77 +264,106 @@ const TransactionManager = () => {
         {!loading && transactions.length > 0 && (
           <Card className="shadow-sm border-0">
             <Card.Header className="bg-white py-3 border-0">
-              <h5 className="mb-0 fw-semibold">Transaction History</h5>
+              <h5 className="mb-0 fw-semibold">Transaction History by Month</h5>
             </Card.Header>
             <Card.Body className="p-0">
-              <div className="table-responsive">
-                <Table hover className="mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th className="ps-4">Amount</th>
-                      <th>Paid To</th>
-                      <th>Payment Type</th>
-                      <th>Created At</th>
-                      <th>Wallet ID</th>
-                      <th className="text-end pe-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((tx) => (
-                      <tr key={tx.id} className="align-middle">
-                        <td className="ps-4 fw-bold text-primary">
-                          {formatCurrency(tx.amount)}
-                        </td>
-                        <td>
-                          <div className="d-flex align-items-center">
-                            <div className="bg-light rounded-circle p-2 me-2">
-                              <FaMoneyBillWave size={14} className="text-muted" />
-                            </div>
-                            {tx.paidTo}
-                          </div>
-                        </td>
-                        <td>
-                          <Badge bg={getPaymentTypeVariant(tx.paymentType)} className="px-2 py-1">
-                            {tx.paymentType}
-                          </Badge>
-                        </td>
-                        <td>
-                          {tx.createdAt
-                            ? new Date(tx.createdAt).toLocaleString()
-                            : '-'}
-                        </td>
-                        <td>
-                          <span className="badge bg-light text-dark border">
-                            {tx.wallet?.id || '-'}
-                          </span>
-                        </td>
-                        <td className="text-end pe-4">
-                          <Button
-                            size="sm"
-                            variant="outline-primary"
-                            className="me-2 rounded-pill px-3"
-                            onClick={() => openEditModal(tx)}
-                            aria-label={`Edit transaction ${tx.paidTo}`}
-                          >
-                            <FaEdit className="me-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline-danger"
-                            className="rounded-pill px-3"
-                            onClick={() => openDeleteModal(tx)}
-                            aria-label={`Delete transaction ${tx.paidTo}`}
-                          >
-                            <FaTrash className="me-1" />
-                            Delete
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
+              {Object.entries(transactionsByMonth).map(([monthKey, monthData]) => (
+                <div key={monthKey} className="border-bottom">
+                  <div 
+                    className="p-3 bg-light cursor-pointer d-flex justify-content-between align-items-center"
+                    onClick={() => toggleMonth(monthKey)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div>
+                      <h6 className="mb-0 fw-bold">{monthData.monthYear}</h6>
+                      <small className="text-muted">
+                        {monthData.transactions.length} transaction{monthData.transactions.length !== 1 ? 's' : ''}
+                      </small>
+                    </div>
+                    <div className="d-flex align-items-center">
+                      <Badge bg="primary" className="me-2 px-2 py-1">
+                        Total: {formatCurrency(monthData.total)}
+                      </Badge>
+                      {expandedMonths.has(monthKey) ? (
+                        <FaChevronUp className="text-muted" />
+                      ) : (
+                        <FaChevronDown className="text-muted" />
+                      )}
+                    </div>
+                  </div>
+                  
+                  {expandedMonths.has(monthKey) && (
+                    <div className="table-responsive">
+                      <Table hover className="mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th className="ps-4">Amount</th>
+                            <th>Paid To</th>
+                            <th>Payment Type</th>
+                            <th>Created At</th>
+                            <th>Wallet ID</th>
+                            <th className="text-end pe-4">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {monthData.transactions.map((tx) => (
+                            <tr key={tx.id} className="align-middle">
+                              <td className="ps-4 fw-bold text-primary">
+                                {formatCurrency(tx.amount)}
+                              </td>
+                              <td>
+                                <div className="d-flex align-items-center">
+                                  <div className="bg-light rounded-circle p-2 me-2">
+                                    <FaMoneyBillWave size={14} className="text-muted" />
+                                  </div>
+                                  {tx.paidTo}
+                                </div>
+                              </td>
+                              <td>
+                                <Badge bg={getPaymentTypeVariant(tx.paymentType)} className="px-2 py-1">
+                                  {tx.paymentType}
+                                </Badge>
+                              </td>
+                              <td>
+                                {tx.createdAt
+                                  ? new Date(tx.createdAt).toLocaleString()
+                                  : '-'}
+                              </td>
+                              <td>
+                                <span className="badge bg-light text-dark border">
+                                  {tx.wallet?.id || '-'}
+                                </span>
+                              </td>
+                              <td className="text-end pe-4">
+                                <Button
+                                  size="sm"
+                                  variant="outline-primary"
+                                  className="me-2 rounded-pill px-3"
+                                  onClick={() => openEditModal(tx)}
+                                  aria-label={`Edit transaction ${tx.paidTo}`}
+                                >
+                                  <FaEdit className="me-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline-danger"
+                                  className="rounded-pill px-3"
+                                  onClick={() => openDeleteModal(tx)}
+                                  aria-label={`Delete transaction ${tx.paidTo}`}
+                                >
+                                  <FaTrash className="me-1" />
+                                  Delete
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              ))}
             </Card.Body>
           </Card>
         )}
@@ -477,6 +552,10 @@ const TransactionManager = () => {
         
         .btn {
           font-weight: 500;
+        }
+        
+        .cursor-pointer {
+          cursor: pointer;
         }
       `}</style>
     </Base>
